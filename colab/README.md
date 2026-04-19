@@ -2,7 +2,7 @@
 
 1. Upload **`LLM_Eval_Pipeline_Colab.ipynb`** to [Google Colab](https://colab.research.google.com/) (**File → Upload notebook**).
 2. **Runtime → Change runtime type → GPU** (T4 or better).
-3. Zip your local project folder so the zip unpacks to a tree that contains **`serve/serve.py`** at `…/serve/serve.py` (upload when prompted), **or** set `GITHUB_REPO_URL` in the first config cell to `git clone` your repo.
+3. By default the notebook clones **[llm-eval-pipeline](https://github.com/atulsaini04/llm-eval-pipeline)** (`GITHUB_REPO_URL` is preset). To upload a zip instead, set `GITHUB_REPO_URL = None` in the first config cell and upload when prompted (zip must unpack to a tree containing **`serve/serve.py`**).
 4. **Runtime → Run all**.
 
 The notebook installs `vLLM` + `lm-eval`, starts `vllm serve` in the background, then runs **Part B** (eval), **Part C** (load test / `metrics.csv`), **Part D** (guardrails), **Part E** (`improve/eval.sh` + `stats.json`), and zips the repo for download.
