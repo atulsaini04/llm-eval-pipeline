@@ -14,3 +14,5 @@ The notebook installs `vLLM` + `lm-eval`, starts `vllm serve` in the background,
 **Step B (`run_eval`) fails:** Re-upload the repo after pulling latest `eval_runner/run_eval.py` (adds `trust_remote_code=true` + `max_length` for SmolLM3, traceback on error). In the notebook config cell, set `EVAL_TASKS = "hellaswag,custom_json_qa"` to skip `mmlu_stem` if downloads or a subtask break. The Part B cell now prints **stdout/stderr** from `run_eval` so the real error is visible.
 
 **Part C (`load_test`):** Uses **`--completions`** (same `/v1/completions` path as Part B), **`--quick`**, **`--overwrite`**, and prints stderr on failure. Tune `LOAD_TEST_CONCURRENCY` / `LOAD_TEST_QUICK` in the config cell.
+
+**Stale repo / `unrecognized arguments: --completions`:** Colab kept an old `/content/assign` copy. The setup cell now runs **`git pull --ff-only`** when cloning from GitHub. If pull fails (private repo), set **`FORCE_REFRESH_COLAB_REPO = True`** once in the config cell, re-run setup, then set it back to **`False`**, or run `!rm -rf /content/assign` and re-run from the setup cell.
