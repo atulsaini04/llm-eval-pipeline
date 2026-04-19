@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+*.sqlite
+*.sqlite3
+eval_runner/cache/
+eval_runner/.cache/
+improve/runs/
+.ipynb_checkpoints/
+*.log

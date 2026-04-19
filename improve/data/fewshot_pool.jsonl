@@ -1,0 +1,4 @@
+{"ctx": "The chef opened the oven and", "endings": ["smelled the bread baking.", "closed the garage door.", "wrote a novel.", "swam across the lake."], "label": 0}
+{"ctx": "After the rain stopped, the hikers", "endings": ["continued up the trail.", "bought a submarine.", "invented calculus.", "turned into penguins."], "label": 0}
+{"ctx": "She plugged in the laptop and", "endings": ["waited for it to boot.", "planted a tree.", "sang opera.", "dissolved in water."], "label": 0}
+{"ctx": "The baby reached for the toy and", "endings": ["knocked it off the table.", "filed taxes.", "launched a rocket.", "predicted the stock market."], "label": 0}

@@ -1,0 +1,27 @@
+{
+  "config": {
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "model_args": "vllm-remote (see eval_runner/run_eval.py)",
+    "tasks": "hellaswag,mmlu_stem,custom_json_qa",
+    "note": "Replace this file with output from: python eval_runner/run_eval.py --limit 0.01"
+  },
+  "results": {
+    "hellaswag": {
+      "alias": "hellaswag",
+      "acc,none": 0.0,
+      "acc_norm,none": 0.0,
+      "acc_stderr,none": 0.0
+    },
+    "mmlu_stem": {
+      "alias": "mmlu_stem",
+      "acc,none": 0.0
+    },
+    "custom_json_qa": {
+      "alias": "custom_json_qa",
+      "exact_match,none": 0.0
+    }
+  },
+  "versions": {
+    "lm_eval": "0.4.x"
+  }
+}

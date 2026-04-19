@@ -1,0 +1,25 @@
+tag:
+  - custom_json_qa
+task: custom_json_qa
+dataset_path: json
+dataset_name: null
+dataset_kwargs:
+  data_files: eval_runner/data/custom_benchmark.jsonl
+output_type: generate_until
+training_split: null
+validation_split: train
+test_split: null
+doc_to_text: "Answer with a single short phrase only.\nQuestion: {{question}}\nAnswer:"
+doc_to_target: "{{answer}}"
+generation_kwargs:
+  until:
+    - "\n"
+  max_gen_toks: 32
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+metadata:
+  version: 1.0
