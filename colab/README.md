@@ -12,3 +12,5 @@ The notebook installs `vLLM` + `lm-eval`, starts `vllm serve` in the background,
 **Disconnects:** Long runs may need Colab Pro or fewer tasks (`EVAL_LIMIT`, `SUBSET_N`).
 
 **Step B (`run_eval`) fails:** Re-upload the repo after pulling latest `eval_runner/run_eval.py` (adds `trust_remote_code=true` + `max_length` for SmolLM3, traceback on error). In the notebook config cell, set `EVAL_TASKS = "hellaswag,custom_json_qa"` to skip `mmlu_stem` if downloads or a subtask break. The Part B cell now prints **stdout/stderr** from `run_eval` so the real error is visible.
+
+**Part C (`load_test`):** Uses **`--completions`** (same `/v1/completions` path as Part B), **`--quick`**, **`--overwrite`**, and prints stderr on failure. Tune `LOAD_TEST_CONCURRENCY` / `LOAD_TEST_QUICK` in the config cell.

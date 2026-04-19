@@ -88,8 +88,10 @@ Full benchmarks are slow; use `--limit` for development (float = fraction per ta
 
 ```bash
 export MODEL=...
-python perf/load_test.py --output metrics.csv --model "$MODEL" --base-url http://127.0.0.1:8000/v1
+python perf/load_test.py --output metrics.csv --model "$MODEL" --base-url http://127.0.0.1:8000/v1 --completions
 ```
+
+Use **`--completions`** to hit `/v1/completions` (same API family as lm-eval / Part B). Without it, the script uses `/v1/chat/completions`. **`--quick`** runs a smaller matrix (good for Colab); **`--overwrite`** replaces `metrics.csv` instead of appending.
 
 Open [`perf/analysis.ipynb`](perf/analysis.ipynb) to plot `metrics.csv`. Columns include TTFT (p50), **`throughput_tokens_per_sec`** (tokens/s), **`tpot_ms_per_token`** (median ms per output token), **`client_batch_size`** (same as concurrency), latency p50/p95/p99, and optional GPU utilization (via `pynvml` when available).
 

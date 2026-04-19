@@ -123,6 +123,58 @@ def _stream_chat(
     return ttft, total, n_tok
 
 
+def _stream_completions(
+    client: httpx.Client,
+    *,
+    base: str,
+    model: str,
+    api_key: str,
+    prompt: str,
+    max_tokens: int,
+    temperature: float,
+    top_p: float,
+    stop: list[str] | None,
+) -> tuple[float | None, float, int]:
+    """OpenAI `/v1/completions` streaming (same API family as lm-eval / Part B)."""
+    url = f"{base.rstrip('/')}/completions"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    payload: dict[str, Any] = {
+        "model": model,
+        "prompt": prompt,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "top_p": top_p,
+        "stream": True,
+    }
+    if stop:
+        payload["stop"] = stop
+    t0 = time.perf_counter()
+    ttft: float | None = None
+    n_chars = 0
+    with client.stream("POST", url, headers=headers, json=payload, timeout=600.0) as r:
+        r.raise_for_status()
+        for line in r.iter_lines():
+            if not line or not line.startswith(b"data: "):
+                continue
+            data = line[6:]
+            if data == b"[DONE]":
+                break
+            try:
+                chunk = json.loads(data)
+            except json.JSONDecodeError:
+                continue
+            for ch in chunk.get("choices", []):
+                raw = ch.get("text")
+                if not isinstance(raw, str):
+                    continue
+                if ttft is None and raw:
+                    ttft = time.perf_counter() - t0
+                n_chars += len(raw)
+    total = time.perf_counter() - t0
+    n_tok = max(1, n_chars // 4)
+    return ttft, total, n_tok
+
+
 def _gpu_sampler(stop_evt: threading.Event, out: list[float]) -> None:
     if pynvml is None:
         return
@@ -151,6 +203,7 @@ def run_once(
     model: str,
     api_key: str,
     max_tokens: int,
+    use_completions: bool = False,
 ) -> Row:
     run_id = str(uuid.uuid4())[:8]
     if profile == "long":
@@ -173,9 +226,10 @@ def run_once(
     t_gpu = threading.Thread(target=_gpu_sampler, args=(stop_evt, gpu_samples), daemon=True)
     t_gpu.start()
 
+    stream_fn = _stream_completions if use_completions else _stream_chat
     with httpx.Client() as client:
         for p in prompts:
-            ttft, total, n_tok = _stream_chat(
+            ttft, total, n_tok = stream_fn(
                 client,
                 base=base_url,
                 model=model,
@@ -241,15 +295,42 @@ def main() -> None:
     p.add_argument("--max-tokens", type=int, default=64)
     p.add_argument("--output", default="metrics.csv")
     p.add_argument("--concurrency", nargs="+", type=int, default=[1, 4, 8])
+    p.add_argument(
+        "--completions",
+        action="store_true",
+        help="Use /v1/completions (matches lm-eval / Part B) instead of /v1/chat/completions.",
+    )
+    p.add_argument(
+        "--quick",
+        action="store_true",
+        help="Smaller matrix: short prompts only, cache off, stop=none (good for Colab smoke).",
+    )
+    p.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Remove --output before writing (avoid appending to an old metrics.csv).",
+    )
     args = p.parse_args()
     if not args.model:
         print("Set --model or MODEL")
         sys.exit(2)
 
+    if args.overwrite and os.path.isfile(args.output):
+        os.remove(args.output)
+
+    if args.quick:
+        profiles: tuple[str, ...] = ("short",)
+        cache_opts = (False,)
+        stops = ("none",)
+    else:
+        profiles = ("short", "long")
+        cache_opts = (False, True)
+        stops = ("none", "double_newline")
+
     for c in args.concurrency:
-        for profile in ("short", "long"):
-            for cache_on in (False, True):
-                for stop_strategy in ("none", "double_newline"):
+        for profile in profiles:
+            for cache_on in cache_opts:
+                for stop_strategy in stops:
                     row = run_once(
                         profile=profile,
                         concurrency=c,
@@ -259,6 +340,7 @@ def main() -> None:
                         model=args.model,
                         api_key=args.api_key,
                         max_tokens=args.max_tokens,
+                        use_completions=args.completions,
                     )
                     append_csv(args.output, row)
                     print(row)

@@ -19,7 +19,7 @@ eval:
 	$(PYTHON) eval_runner/run_eval.py
 
 perf:
-	$(PYTHON) perf/load_test.py --output metrics.csv
+	$(PYTHON) perf/load_test.py --output metrics.csv --completions --model $(MODEL) --base-url http://$(VLLM_HOST):$(VLLM_PORT)/v1
 
 guardrails:
 	$(PYTHON) guardrails/validate.py
