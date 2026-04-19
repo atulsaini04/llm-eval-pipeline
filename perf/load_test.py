@@ -47,6 +47,17 @@ LONG_PREFIX = (
 )
 
 
+def _sse_data_payload(line: str | bytes | None) -> str | None:
+    """httpx may yield str or bytes per line depending on version; normalize to payload after 'data: '."""
+    if not line:
+        return None
+    if isinstance(line, bytes):
+        line = line.decode("utf-8", errors="replace")
+    if not line.startswith("data: "):
+        return None
+    return line[6:]
+
+
 @dataclass
 class Row:
     """Assignment metrics: TTFT; throughput (tokens/s); latency p50/p95/p99; optional GPU.
@@ -102,10 +113,10 @@ def _stream_chat(
     with client.stream("POST", url, headers=headers, json=payload, timeout=600.0) as r:
         r.raise_for_status()
         for line in r.iter_lines():
-            if not line or not line.startswith(b"data: "):
+            data = _sse_data_payload(line)
+            if data is None:
                 continue
-            data = line[6:]
-            if data == b"[DONE]":
+            if data == "[DONE]":
                 break
             if ttft is None:
                 ttft = time.perf_counter() - t0
@@ -154,10 +165,10 @@ def _stream_completions(
     with client.stream("POST", url, headers=headers, json=payload, timeout=600.0) as r:
         r.raise_for_status()
         for line in r.iter_lines():
-            if not line or not line.startswith(b"data: "):
+            data = _sse_data_payload(line)
+            if data is None:
                 continue
-            data = line[6:]
-            if data == b"[DONE]":
+            if data == "[DONE]":
                 break
             try:
                 chunk = json.loads(data)
