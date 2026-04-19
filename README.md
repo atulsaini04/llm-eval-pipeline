@@ -4,12 +4,60 @@ Internal-style assignment covering **serving**, **lm-eval integration**, **load 
 
 ## Google Colab (recommended without a local NVIDIA GPU)
 
-1. Zip this repository (repo root must contain `serve/`, `eval_runner/`, etc.).
-2. In [Colab](https://colab.research.google.com/), **Upload** [`colab/LLM_Eval_Pipeline_Colab.ipynb`](colab/LLM_Eval_Pipeline_Colab.ipynb) (**File → Upload notebook**).
-3. **Runtime → Change runtime type → GPU** (T4).
-4. Run all cells: the notebook installs dependencies, starts **vLLM**, runs Parts **A–E**, and offers a **zip download** of results.
+Use this path if you do not have a local NVIDIA GPU (e.g. Apple Silicon). One end-to-end run typically takes **~20–60+ minutes** on a Colab **T4**, mostly install + vLLM startup + eval.
 
-See [`colab/README.md`](colab/README.md) for details.
+### Steps
+
+1. **Open Colab**  
+   Go to [colab.research.google.com](https://colab.research.google.com/) and sign in.
+
+2. **Open the notebook**  
+   - **File → Upload notebook** and select [`colab/LLM_Eval_Pipeline_Colab.ipynb`](colab/LLM_Eval_Pipeline_Colab.ipynb) from your clone of this repo, **or**  
+   - In Colab: **File → Open notebook → GitHub** and paste your fork URL (e.g. `https://github.com/<you>/llm-eval-pipeline/blob/main/colab/LLM_Eval_Pipeline_Colab.ipynb`) so you always run the version from GitHub.
+
+3. **Enable a GPU**  
+   **Runtime → Change runtime type → Hardware accelerator: GPU** (T4 is enough; larger GPUs are faster).
+
+4. **Configure the first code cell** (optional; defaults work for a smoke run):
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `GITHUB_REPO_URL` | Default clones this project from GitHub. Set to `None` if you prefer to **upload a zip** of the repo when the setup cell asks (zip must contain `serve/serve.py`, `eval_runner/`, etc.). |
+   | `MODEL` | HuggingFace id served by vLLM (default **`HuggingFaceTB/SmolLM3-3B`**). |
+   | `EVAL_LIMIT` | Fraction of each benchmark (default **`0.02`** keeps Part B fast). |
+   | `EVAL_TASKS` | Comma-separated lm-eval tasks (default includes HellaSwag, MMLU STEM subgroup, custom JSON QA). |
+   | `VLLM_MAX_MODEL_LEN`, `VLLM_GPU_MEM_UTIL`, `VLLM_MAX_NUM_SEQS` | T4 VRAM tuning; lower further if vLLM **CUDA OOM** during warmup. |
+   | `LOAD_TEST_*` | Part C load test (concurrency, `--quick` matrix). |
+
+   **Private GitHub repo:** add a Colab secret **`GITHUB_TOKEN`** (read access to the repo) so `git pull` and the Part C self-heal can fetch updates. Alternatively use a **public** repo or **`GITHUB_REPO_URL = None`** + zip upload.
+
+5. **Run everything**  
+   **Runtime → Run all**. The first execution installs `pip` dependencies, **`vllm`**, and **`lm-eval`** (can take several minutes). Then the notebook:
+
+   | Section | What it does |
+   |---------|----------------|
+   | Setup | Clones or unpacks the repo under `/content/assign`, sets env vars. |
+   | Install | `pip install -r requirements.txt` + `vllm`. |
+   | Part A | Starts **`vllm serve`** in the background (OpenAI-compatible API). |
+   | Part B | **`eval_runner/run_eval.py`** → `results/eval_results.json`, `results/summary.md`. |
+   | Part C | **`perf/load_test.py`** → **`metrics.csv`** (root of repo). |
+   | Part D | **`guardrails/validate.py`**. |
+   | Part E | **`improve/eval.sh`** → **`improve/runs/stats.json`** and run artifacts. |
+   | Download | Builds **`assign_results.zip`** and starts a browser download. |
+
+6. **Get your artifacts**  
+   When the **Download results zip** cell finishes, your browser saves **`assign_results.zip`**. Unzip it to any folder (for example a directory named `assign_results` next to your Downloads). That folder is a snapshot of the project tree **including generated outputs**, for example:
+
+   - **`results/eval_results.json`**, **`results/summary.md`** — lm-eval outputs  
+   - **`metrics.csv`** — load-test metrics (TTFT, throughput, latency percentiles, …)  
+   - **`improve/runs/stats.json`**, **`improve/runs/baseline.jsonl`**, **`improve/runs/improved.jsonl`** — Part E stats and generations  
+   - **`eval_runner/cache/`** (optional, can be large) — API response cache from eval  
+
+   Open **`perf/analysis.ipynb`** locally on the unzipped **`metrics.csv`** if you want plots.
+
+### Troubleshooting (Colab)
+
+OOM on vLLM, failed Step B, stale `perf/load_test.py`, disconnects: see **[`colab/README.md`](colab/README.md)**.
 
 ## Prerequisites (local)
 
